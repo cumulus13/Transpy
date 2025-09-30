@@ -1,0 +1,39 @@
+[
+    {
+        "caption": "Transpy: Translate Selection/Line",
+        "command": "transpy_translate"
+    },
+    {
+        "caption": "Transpy: Translate to English",
+        "command": "transpy_translate",
+        "args": {"dest_lang": "en"}
+    },
+    {
+        "caption": "Transpy: Translate to Indonesian",
+        "command": "transpy_translate",
+        "args": {"dest_lang": "id"}
+    },
+    {
+        "caption": "Transpy: Reverse Translation",
+        "command": "transpy_translate",
+        "args": {"reverse": true}
+    },
+    {
+        "caption": "Transpy: Detect Language",
+        "command": "transpy_detect_language"
+    },
+    {
+        "caption": "Transpy: Show Translation History",
+        "command": "transpy_show_history"
+    },
+    {
+        "caption": "Transpy: Open Settings",
+        "command": "open_file",
+        "args": {"file": "${packages}/Transpy/Transpy.sublime-settings"}
+    },
+    {
+        "caption": "Transpy: Key Bindings",
+        "command": "open_file",
+        "args": {"file": "${packages}/Transpy/Default ($platform).sublime-keymap"}
+    }
+]

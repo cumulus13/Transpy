@@ -1,0 +1,35 @@
+{
+    // Default source language ('auto' for auto-detection)
+    "default_src_lang": "auto",
+    
+    // Default target language
+    "default_dest_lang": "id",
+    
+    // Show output panel with translation results
+    "show_output_panel": true,
+    
+    // Show desktop notifications (if available)
+    "show_desktop_notifications": false,
+    
+    // Auto-copy translation to clipboard
+    "auto_copy_to_clipboard": false,
+    
+    // Enable translation history
+    "enable_history": true,
+    
+    // Maximum history entries to keep
+    "max_history_entries": 100,
+    
+    // Enable text-to-speech (requires pyttsx3)
+    "enable_tts": false,
+    
+    // TTS speech rate (words per minute)
+    "tts_rate": 150,
+    "http_timeout": 30,
+    
+    // Default key bindings behavior
+    "use_platform_specific_keys": true,
+
+    // Debug Settings
+    "verbose_logging": false
+}

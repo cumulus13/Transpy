@@ -1,0 +1,38 @@
+[
+    {
+        "keys": ["ctrl+alt+t"],
+        "command": "transpy_translate",
+        "args": {
+            "src_lang": "auto",
+            "dest_lang": "id", 
+            "show_notification": true
+        }
+    },
+    {
+        "keys": ["ctrl+alt+e"],
+        "command": "transpy_translate",
+        "args": {
+            "src_lang": "auto",
+            "dest_lang": "en",
+            "show_notification": true
+        }
+    },
+    {
+        "keys": ["ctrl+alt+shift+t"],
+        "command": "transpy_translate",
+        "args": {
+            "reverse": true,
+            "show_notification": true
+        }
+    },
+    {
+        "keys": ["ctrl+alt+d"],
+        "command": "transpy_detect_language",
+        "args": {}
+    },
+    {
+        "keys": ["ctrl+alt+h"],
+        "command": "transpy_show_history",
+        "args": {}
+    }
+]
