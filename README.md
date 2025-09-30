@@ -260,7 +260,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Happy Translating!** 🌍✨
 
 If you find this plugin useful, please consider giving it a ⭐ on GitHub!
-```
+
 
 ## 🚀 **DEPLOYMENT STEPS:**
 
