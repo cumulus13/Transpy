@@ -1,0 +1,74 @@
+[
+    {
+        "caption": "Transpy",
+        "children": [
+            {
+                "caption": "Settings – Default",
+                "command": "edit_settings",
+                "args": {
+                    "base_file": "${packages}/Transpy/Transpy.sublime-settings"
+                }
+            },
+            {
+                "caption": "Settings – User",
+                "command": "edit_settings",
+                "args": {
+                    "base_file": "${packages}/Transpy/Transpy.sublime-settings",
+                    "user": true
+                }
+            },
+            { "caption": "-" },
+            {
+                "caption": "Key Bindings – Default",
+                "command": "open_file",
+                "args": {
+                    "file": "${packages}/Transpy/Default (Windows).sublime-keymap"
+                },
+                "platform": "Windows"
+            },
+            {
+                "caption": "Key Bindings – User",
+                "command": "edit_settings",
+                "args": {
+                    "base_file": "${packages}/Transpy/Default (Windows).sublime-keymap",
+                    "user": true
+                },
+                "platform": "Windows"
+            },
+            {
+                "caption": "Key Bindings – Default",
+                "command": "open_file",
+                "args": {
+                    "file": "${packages}/Transpy/Default (Linux).sublime-keymap"
+                },
+                "platform": "Linux"
+            },
+            {
+                "caption": "Key Bindings – User",
+                "command": "edit_settings",
+                "args": {
+                    "base_file": "${packages}/Transpy/Default (Linux).sublime-keymap",
+                    "user": true
+                },
+                "platform": "Linux"
+            },
+            {
+                "caption": "Key Bindings – Default",
+                "command": "open_file",
+                "args": {
+                    "file": "${packages}/Transpy/Default (OSX).sublime-keymap"
+                },
+                "platform": "OSX"
+            },
+            {
+                "caption": "Key Bindings – User",
+                "command": "edit_settings",
+                "args": {
+                    "base_file": "${packages}/Transpy/Default (OSX).sublime-keymap",
+                    "user": true
+                },
+                "platform": "OSX"
+            }
+        ]
+    }
+]
