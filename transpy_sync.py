@@ -14,11 +14,14 @@ import re  # Untuk sentence splitting
 
 class SyncTranslator:
     """Synchronous translator using Google Translate API - No dependencies!"""
-    
+
+    # Try these in order; gtx is currently blocked (HTTP 429) as of 2026-09.
+    CLIENTS = ["dict-chrome-ex", "gtx", "at"]
+
     def __init__(self):
         self.base_url = "https://translate.googleapis.com/translate_a/single"
         self.languages = self._load_languages()
-        self.max_chars = 4500  # Google limit ~5000, kita kasih buffer
+        self.max_chars = 4500  # Google limit ~5000, charachters
         self.max_lines = 50    # Prevent huge blocks
     
     def _load_languages(self):
@@ -52,7 +55,7 @@ class SyncTranslator:
             'cy': 'welsh', 'xh': 'xhosa', 'yi': 'yiddish', 'yo': 'yoruba',
             'zu': 'zulu'
         }
-    
+
     def validate_text(self, text):
         """Validate text before translation"""
         if not text or not text.strip():
@@ -70,16 +73,49 @@ class SyncTranslator:
                 line_count, self.max_lines)
         
         return True, "OK"
-    
+
+    def _request(self, params, timeout=30):
+        """Try each client id until one returns usable JSON. Returns (result, error_msg)."""
+        last_err = "Unknown error"
+        for client in self.CLIENTS:
+            p = dict(params)
+            p['client'] = client
+            query_string = urllib.parse.urlencode(p)
+            url = "{}?{}".format(self.base_url, query_string)
+            req = urllib.request.Request(
+                url,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as response:
+                    result_data = response.read().decode('utf-8')
+                    try:
+                        result = json.loads(result_data)
+                    except ValueError:
+                        last_err = "Invalid JSON from client={}".format(client)
+                        continue
+                    if result:
+                        return result, None
+                    last_err = "Empty response from client={}".format(client)
+            except urllib.error.HTTPError as e:
+                last_err = "HTTP error {} ({}) from client={}".format(e.code, e.reason, client)
+                continue
+            except urllib.error.URLError as e:
+                last_err = "Network error ({}) from client={}".format(
+                    e.reason if hasattr(e, 'reason') else str(e), client)
+                continue
+        return None, last_err
+
     def translate(self, text, src='auto', dest='en'):
         """Synchronous translation with length validation"""
         # Validate text first
         is_valid, validation_msg = self.validate_text(text)
         if not is_valid:
             return TranslationResult("[ERROR] {}".format(validation_msg), src, 0.0)
-        
+
         params = {
-            'client': 'gtx',
             'dt': 't',
             'q': text,
             'sl': src,
@@ -87,55 +123,21 @@ class SyncTranslator:
             'ie': 'UTF-8',
             'oe': 'UTF-8'
         }
-        
-        try:
-            # Build URL
-            query_string = urllib.parse.urlencode(params)
-            url = "{}?{}".format(self.base_url, query_string)
-            
-            # Make request with timeout
-            req = urllib.request.Request(
-                url,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
+
+        result, err = self._request(params)
+        if result is None:
+            return TranslationResult("[ERROR] Translation failed: {}".format(err), src, 0.0)
+
+        if result and len(result) > 0 and result[0]:
+            translated = ''.join([part[0] for part in result[0] if part[0]])
+            detected_lang = result[2] if len(result) > 2 and result[2] else src
+            return TranslationResult(
+                text=translated,
+                detected_lang=detected_lang,
+                confidence=0.9 if detected_lang != 'auto' else 0.5
             )
-            
-            with urllib.request.urlopen(req, timeout=30) as response:
-                result_data = response.read().decode('utf-8')
-                result = json.loads(result_data)
-                
-                if result and len(result) > 0 and result[0]:
-                    # Extract translated text
-                    translated = ''.join([part[0] for part in result[0] if part[0]])
-                    
-                    # Extract detected language
-                    detected_lang = result[2] if len(result) > 2 and result[2] else src
-                    
-                    return TranslationResult(
-                        text=translated,
-                        detected_lang=detected_lang,
-                        confidence=0.9 if detected_lang != 'auto' else 0.5
-                    )
-                else:
-                    return TranslationResult(
-                        "[ERROR] Invalid response from translation service",
-                        src,
-                        0.0
-                    )
-        
-        except urllib.error.URLError as e:
-            error_msg = "Network error: {}".format(e.reason if hasattr(e, 'reason') else str(e))
-            return TranslationResult("[ERROR] {}".format(error_msg), src, 0.0)
-        
-        except urllib.error.HTTPError as e:
-            error_msg = "HTTP error {}: {}".format(e.code, e.reason)
-            return TranslationResult("[ERROR] {}".format(error_msg), src, 0.0)
-        
-        except Exception as e:
-            error_msg = "Translation failed: {}".format(str(e))
-            return TranslationResult("[ERROR] {}".format(error_msg), src, 0.0)
-    
+        return TranslationResult("[ERROR] Invalid response from translation service", src, 0.0)
+
     def translate_large_text(self, text, src='auto', dest='en'):
         """
         Advanced feature: Split and translate large text in chunks
@@ -154,18 +156,16 @@ class SyncTranslator:
                 # Even after splitting, one chunk is still too large
                 return TranslationResult(
                     "[ERROR] Text too large to process. Please split manually.",
-                    src,
-                    0.0
+                    src, 0.0
                 )
             
             results = []
             for i, chunk in enumerate(chunks):
-                # FIX: Gunakan format() bukan f-string
                 print("Translating chunk {}/{} ({} chars)...".format(
                     i + 1, len(chunks), len(chunk)))
                 
                 result = self.translate(chunk, src, dest)
-                if result.is_error():  # ✅ Method ini HARUS ada di TranslationResult
+                if result.is_error():  # ✅ Method  must exists in TranslationResult
                     return result
                 results.append(result.text)
             
@@ -174,7 +174,7 @@ class SyncTranslator:
             return TranslationResult(combined_text, src, 0.8)  # Lower confidence for chunks
         
         return TranslationResult("[ERROR] {}".format(validation_msg), src, 0.0)
-    
+
     def _split_text_chunks(self, text, chunk_size):
         """Split text into chunks at paragraph boundaries"""
         # First try to split by paragraphs
@@ -210,13 +210,13 @@ class SyncTranslator:
             chunks.append(current_chunk.strip())
         
         return chunks
-    
+
     def _split_sentences(self, text):
         """Simple sentence splitting (basic implementation)"""
         # Basic sentence splitting by common endings
         sentences = re.split(r'[.!?]+', text)
         return [s.strip() for s in sentences if s.strip()]
-    
+
     def detect_language(self, text):
         """Detect language of given text"""
         if not text or not text.strip():
@@ -224,44 +224,27 @@ class SyncTranslator:
         
         # Use shorter text for detection
         detection_text = text[:500] if len(text) > 500 else text
-        
-        try:
-            params = {
-                'client': 'gtx',
-                'dt': 'at',
-                'q': detection_text,
-                'sl': 'auto',
-                'tl': 'en'
-            }
-            
-            query_string = urllib.parse.urlencode(params)
-            url = "{}?{}".format(self.base_url, query_string)
-            
-            req = urllib.request.Request(
-                url,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            )
-            
-            with urllib.request.urlopen(req, timeout=10) as response:
-                result_data = response.read().decode('utf-8')
-                result = json.loads(result_data)
-                
-                if result and len(result) > 2 and result[2]:
-                    detected_lang = result[2]
-                    confidence = 0.9 if detected_lang != 'auto' else 0.5
-                    return detected_lang, confidence
-        
-        except Exception as e:
-            print("Transpy: Language detection error - {}".format(e))
-        
+        params = {
+            'dt': 'at',
+            'q': detection_text,
+            'sl': 'auto',
+            'tl': 'en'
+        }
+
+        result, err = self._request(params, timeout=10)
+        if result is None:
+            print("Transpy: Language detection error - {}".format(err))
+            return 'auto', 0.0
+
+        if len(result) > 2 and result[2]:
+            detected_lang = result[2]
+            confidence = 0.9 if detected_lang != 'auto' else 0.5
+            return detected_lang, confidence
         return 'auto', 0.0
-    
+
     def get_language_name(self, code):
         """Get human-readable language name from code"""
         return self.languages.get(code, code)
-
 
 class TranslationResult:
     """Translation result container - FIXED dengan semua method"""

@@ -14,7 +14,7 @@ class TranspyDebugCommand(sublime_plugin.TextCommand):
             if region.empty():
                 line = self.view.line(region)
                 text = self.view.substr(line)
-                print(f"Selection", i, ": LINE - '" + text + "'")
+                print("Selection", i, ": LINE - '" + text + "'")
             else:
                 text = self.view.substr(region)
                 print("Selection", i, ": TEXT - '%s'" % text)
